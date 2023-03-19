@@ -9,6 +9,8 @@ import time
 import jwt
 import paho.mqtt.client as mqtt
 
+
+
 # ------------------------------------------------------------------------
 # CSI 4160: If using a SenseHat, then keep the following line
 # No changes needed here, just showing you the changes I made
@@ -32,11 +34,11 @@ mqtt_bridge_port = 8883  # Bridge port.
 message_type = 'event'  # Message type (event or state).
 
 #additional variables for monitoring system
-baseline = 0
+baseline = 32
 
-upper_variance = 0
+upper_variance = 5
 
-lower_variance = 0
+lower_variance = 5
 
 status = ''
 
@@ -204,9 +206,15 @@ def main():
                 'Upper Variance' : upper_variance,
                 'Lower Variance' : lower_variance
             }
+
+            #exit after packet is sent - Rick
+            if num_message > 1:
+                return
+
             payload = json.dumps(data, indent=4)
             print('Publishing payload', payload)
             client.publish(mqtt_telemetry_topic, payload, qos=1)
+
 
     except KeyboardInterrupt:
         # Exit script on ^C.
@@ -218,6 +226,7 @@ def main():
         device.sense.clear()
         # ------------------------------------------------------------------------
         print('Exit with ^C. Goodbye!')
+
         
 # CSI 4160: Calls main function
 if __name__ == '__main__':
