@@ -5,51 +5,63 @@ import time
 
 #Temperature Monitoring/Warning System
 
+#function for resetting main()
+def Summary(alert):
+    sensehat.main(alert)
+
 #variables
 Rasp_pi = sensehat.Device()
 sense = SenseHat()
-#temperature = str(sensehat.Device.get_temperature(Rasp_pi))
-temperature = Rasp_pi.temp
-#temperature = sense.get_temperature()
-baseline = sensehat.baseline
-upper_variance = sensehat.upper_variance
-lower_variance = sensehat.lower_variance
-status = sensehat.status
+summary = sensehat.main('alert')
+temperature = int(Rasp_pi.temp)
+baseline = int(summary[0])
+upper_variance = int(summary[1])
+lower_variance = int(summary[2])
+status = Rasp_pi.status
 red = (255,0,0)
 green = (0,255,0)
 blue = (0,0,225)
 
-#function for resetting main()
-def Summary():
-    sensehat.main()
-
 #start monitoring system
-status = 'start'
 #while loop
-while status == 'start':
+while status == 'running':
     #if-else to find the correct alert to print
 
     #Red Alert for temps above upper variance
     if temperature > baseline + upper_variance:
         sense.clear()
-        print('RED ALERT: ' + str(int(temperature)) + ' *F')
+        print('RED ALERT: ' + str(int(temperature)) + ' *C')
         sense.show_message('RED ALERT: ' + str(temperature), text_colour=red)
+        baseline = int(summary[0])
+        upper_variance = int(summary[1])
+        lower_variance = int(summary[2])
+        print(baseline)
+        print(upper_variance)
+        print(lower_variance)
+        Summary('RED ALERT')
 
         #Blue Alert for temps below lower variance
     elif temperature < baseline - lower_variance:
         sense.clear()
-        print('BLUE ALERT: ' + str(int(temperature)) + ' *F')
+        print('BLUE ALERT: ' + str(int(temperature)) + ' *C')
         sense.show_message('BLUE ALERT: ' + str(temperature), text_colour=blue)
+        baseline = int(summary[0])
+        upper_variance = int(summary[1])
+        lower_variance = int(summary[2])
+        print(baseline)
+        print(upper_variance)
+        print(lower_variance)
+        Summary('BLUE ALERT')
 
         #message for temps in safe zone
     else:
         sense.clear()
-        print('SAFE: ' + str(int(temperature)) + ' *F')
+        print('SAFE: ' + str(int(temperature)) + ' *C')
         sense.show_message('SAFE: ' + str(temperature), text_colour=green)
-
-    #call summary function
-    Summary()
-    
-
-    #update status to exit loop
-    #status = 'end'
+        baseline = int(summary[0])
+        upper_variance = int(summary[1])
+        lower_variance = int(summary[2])
+        print(baseline)
+        print(upper_variance)
+        print(lower_variance)
+        Summary('SAFE')

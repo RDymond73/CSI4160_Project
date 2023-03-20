@@ -33,14 +33,15 @@ mqtt_bridge_hostname = 'mqtt.googleapis.com'  # GC bridge hostname.
 mqtt_bridge_port = 8883  # Bridge port.
 message_type = 'event'  # Message type (event or state).
 
-#additional variables for monitoring system
+#additional variables for monitoring system - Rick
 baseline = 32
 
 upper_variance = 5
 
 lower_variance = 5
 
-status = ''
+status = 'running'
+
 
 
 def create_jwt(project_id, private_key_file, algorithm):
@@ -72,8 +73,15 @@ class Device(object):
 
         # CSI 4160: Change these variables (msg and temp) to match the 
         # sensor/actuator you used in Assignment 1
+
+        #assign local vars for PI - Rick
         self.msg = str(self.sense.get_temperature())
         self.temp = self.sense.get_temperature()
+        self.baseline = baseline
+        self.upper = upper_variance
+        self.lower = lower_variance
+        self.status = status
+        #self.alert = alert
         # ---------------------------------------------------------------
 
     # ---------------------------------------------------------------------
@@ -131,15 +139,37 @@ class Device(object):
 
         # If the data in the new message from GCP is different than what you
         # have, need to update what you have
-        if data['msg'] != self.msg:
-            self.msg = data['msg']
-            print('Message is: %s', self.msg)
+        # if data['msg'] != self.msg:
+        #     self.msg = data['msg']
+        #     print('Message is: %s', self.msg)
+        # have, need to update what you have
+
+        #update status from GCP - Rick
+        if data['Status'] != self.status:
+            self.status = data['Status']
+            print('Status: ' + self.status)
+        
+        #update baseline temp from GCP - Rick
+        if data['Baseline Temperature'] != self.baseline:
+            self.baseline = data['Baseline Temperature']
+            print('Baseline Temperature is: ' + str(self.baseline))
+
+        #update upper variance from GCP - Rick
+        if data['Upper Variance'] != self.upper:
+            self.upper = data['Upper Variance']
+            print('Upper Variance: ' + str(self.upper))
+
+        #update lower variance from GCP - Rick
+        if data['Lower Variance'] != self.lower:
+            self.lower = data['Lower Variance']
+            print('Lower Variance: ' + str(self.lower))
+
             
         # May need to add another if statement for another piece of data
         # you're sending from GCP
         # ---------------------------------------------------------------------
 
-def main():
+def main(alert):
 
     client = mqtt.Client(
         client_id='projects/{}/locations/{}/registries/{}/devices/{}'.format(
@@ -200,20 +230,35 @@ def main():
                 # ------------------------------------------------------------------------
                 'Summary': 'Temperature Report',
                 'Time' : currentTime,
+                'Status' : device.status,
+                'Alert' : alert,
                 'Temperature': device.temp, 
-                'Status' : status,
-                'Baseline Temperature' : baseline,
-                'Upper Variance' : upper_variance,
-                'Lower Variance' : lower_variance
+                'Baseline Temperature' : device.baseline,
+                'Upper Variance' : device.upper,
+                'Lower Variance' : device.lower
             }
 
-            #exit after packet is sent - Rick
-            if num_message > 1:
-                return
+            # #exit after packet is sent - Rick
+            # if num_message > 1:
+            #     baseline = str(data['Baseline Temperature'])
+            #     upper = str(data['Upper Variance'])
+            #     lower = str(data['Lower Variance'])
+            #     vars3 = [baseline,upper,lower]
+            #     print(vars3)
+            #     return vars3 
 
             payload = json.dumps(data, indent=4)
             print('Publishing payload', payload)
             client.publish(mqtt_telemetry_topic, payload, qos=1)
+
+            #exit after packet is sent - Rick
+            if num_message > 1:
+                baseline = data['Baseline Temperature']
+                upper = data['Upper Variance']
+                lower = data['Lower Variance']
+                vars3 = {'base':baseline,'upper':upper,'lower':lower}
+                #print(vars3)
+                return baseline, upper, lower
 
 
     except KeyboardInterrupt:
@@ -227,7 +272,9 @@ def main():
         # ------------------------------------------------------------------------
         print('Exit with ^C. Goodbye!')
 
+
         
 # CSI 4160: Calls main function
 if __name__ == '__main__':
-    main()
+    main('alert')
+
