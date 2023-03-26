@@ -19,6 +19,6 @@ Make changes to sensehat.py to connect to your gcp IoT:
 - baseline, upper variance, and lower variance can be changed 
 - do not change status
 
-moitor.py is the main script to run
+monitor.py is the main script to run
 
 
